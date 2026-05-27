@@ -1,9 +1,0 @@
-outputs/
-*.gz
-*.cache
-*.rdb
-*.rdx
-BiocFileCache/
-*.BiocVersion
-.RData
-.Rhistory
