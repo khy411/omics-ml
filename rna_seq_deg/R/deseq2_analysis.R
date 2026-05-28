@@ -57,7 +57,10 @@ run_deseq2 <- function(counts, meta, group_var, ref_level, contrast_level,
                                   design = as.formula(formula_str))
     dds <- DESeq(dds, parallel = TRUE)
 
-    # apelgm requires the coef name, not a contrast vector
+    # for checking
+    message("Available coefs: ", paste(resultsNames(dds), collapse = ", "))
+
+    # apeglm requires the coef name, not a contrast vector
     # coef name format: groupvar_level_vs_reflevel
 
     coef_name <- paste0(group_var, "_", contrast_level, "_vs_", ref_level)
@@ -95,3 +98,30 @@ er_out <- run_deseq2(
     contrast_level = "Positive",
     label = "ER+ vs ER-"
 )
+
+write_csv(er_out$results, file.path(output_dir, "deseq2_results_ER.csv"))
+saveRDS(er_out$dds, file.path(output_dir, "dds_ER.rds"))
+message("Saved DESeq2 ER results: outputs/deseq2_results_ER.csv")
+
+# contrast B: HER2+ vs HER2-
+her2_out <- run_deseq2(
+    counts, meta,
+    group_var = "her2_status",
+    ref_level = "Negative",
+    contrast_level = "Positive",
+    label = "HER2+ vs HER2-"
+)
+
+write_csv(her2_out$results, file.path(output_dir, "deseq2_results_HER2.csv"))
+message("Saved DESeq2 HER2 results: outputs/deseq2_results_HER2.csv")
+
+# export top DEGs for future purpose
+top_degs <- er_out$results %>%
+    filter(significance %in% c("Up", "Down"), !is.na(padj)) %>%
+    select(gene_id, log2FoldChange, padj, significance, abs_lfc) %>%
+    slice_min(padj, n = 500)
+
+write_csv(top_degs, file.path(output_dir, "top500_degs_ER.csv"))
+message("Saved top 500 DEGs for ER contrast: outputs/top500_degs_ER.csv")
+
+message("\nDESeq2 analysis complete. Next: visualization.R")
